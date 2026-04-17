@@ -1,16 +1,16 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score 
 import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 import joblib
 
-mlflow.set_tracking_uri("http://34.234.65.117:5000/")   
+# MLflow setup
+mlflow.set_tracking_uri("http://34.234.65.117:5000/")
 mlflow.set_experiment("Seattle_weather_prediction203")
 
+# Load data
 df = pd.read_csv("seattle-weather.csv")
 df = df.dropna()
 
@@ -21,62 +21,59 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
+with mlflow.start_run():
 
-with mlflow.start_run() as run:
-
-    # model = RandomForestClassifier(
-        # n_estimators=100,
-        # max_depth=10,
-        # random_state=42
-    # )
-    model=LogisticRegression()
-    # model=DecisionTreeClassifier()
+    # Model
+    model = LogisticRegression(max_iter=200)
     model.fit(X_train, y_train)
 
     pred = model.predict(X_test)
 
+    # Metrics
     accuracy = accuracy_score(y_test, pred)
-    precision = precision_score(y_test, pred, average="weighted")
-    recall = recall_score(y_test, pred, average="weighted")
-    f1 = f1_score(y_test, pred, average="weighted")
+    precision = precision_score(y_test, pred, average="weighted", zero_division=1)
+    recall = recall_score(y_test, pred, average="weighted", zero_division=1)
+    f1 = f1_score(y_test, pred, average="weighted", zero_division=1)
 
     print("Accuracy:", accuracy)
     print("Precision:", precision)
     print("Recall:", recall)
     print("F1 Score:", f1)
 
-    # Log metric
+    # Log metrics
     mlflow.log_metric("accuracy", accuracy)
     mlflow.log_metric("precision", precision)
     mlflow.log_metric("recall", recall)
     mlflow.log_metric("f1_score", f1)
-    report = classification_report(y_test, pred)
+
+    # Create classification report
+    report = classification_report(y_test, pred, zero_division=1)
 
     with open("classification_report.txt", "w") as f:
         f.write(report)
 
-    mlflow.log_artifact("classification_report.txt")
-    
-    # Register model (creates new version automatically)
+    # ✅ FIXED artifact logging
+    mlflow.log_artifact("classification_report.txt", artifact_path="reports")
+
+    # Log model
     mlflow.sklearn.log_model(
         sk_model=model,
         artifact_path="model",
         registered_model_name="SeattleWeatherModel26"
     )
+
     joblib.dump(model, "model.pkl")
     print("Model saved locally as model.pkl")
-# -----------------------------
-# 4️⃣ Add Description to Latest Version
-# -----------------------------
+
+# Add description
 client = MlflowClient()
 
 latest_version = client.get_latest_versions("SeattleWeatherModel26")[0].version
+
 client.update_model_version(
     name="SeattleWeatherModel26",
     version=latest_version,
-    # description="RandomForestClassifier model trained on Seattle weather dataset"
-    description="LogisticRegressionClassifier model trained on Seattle weather dataset"
-    # description="DecisionTreeClassifier model trained on Seattle weather dataset"
+    description="LogisticRegression model trained on Seattle weather dataset"
 )
 
-print(f"Model Version {latest_version} updated with description successfully!")
+print(f"Model Version {latest_version} updated successfully!")
