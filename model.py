@@ -8,7 +8,7 @@ import joblib
 
 # MLflow setup
 mlflow.set_tracking_uri("http://34.234.65.117:5000/")
-mlflow.set_experiment("Seattle_weather_prediction_New")
+mlflow.set_experiment("Seattle_weather_prediction_Final")
 
 # Load data
 df = pd.read_csv("seattle-weather.csv")
