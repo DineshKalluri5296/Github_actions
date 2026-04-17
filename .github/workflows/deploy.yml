@@ -48,7 +48,7 @@ jobs:
     # ✅ Upload Model to S3
     - name: Upload Model to S3
       run: |
-        aws s3 cp model.pkl s3://seattle-ml-app/models/3/model.pkl
+        aws s3 cp model.pkl s3://seattle-mlflow-artifacts/models/3/model.pkl
 
     # ✅ Login to ECR
     - name: Login to ECR
