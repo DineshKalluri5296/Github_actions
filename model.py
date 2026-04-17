@@ -5,10 +5,22 @@ from sklearn.metrics import accuracy_score, classification_report, precision_sco
 import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 import joblib
+from mlflow.exceptions import MlflowException
 
-# MLflow setup
 mlflow.set_tracking_uri("http://34.234.65.117:5000/")
-mlflow.set_experiment("Seattle_weather_prediction_Final_ok")
+
+experiment_name = "Seattle_weather_prediction_Final_2026"
+
+try:
+    mlflow.create_experiment(
+        experiment_name,
+        artifact_location="s3://seattle-mlflow-artifacts"
+    )
+except MlflowException:
+    pass
+
+mlflow.set_experiment(experiment_name)
+
 
 # Load data
 df = pd.read_csv("seattle-weather.csv")
